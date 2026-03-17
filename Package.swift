@@ -11,12 +11,11 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/TimOliver/Echo", .branch("main")),
-        .package(url: "https://github.com/FLEXTool/FLEX", .branch("master")),
     ],
     targets: [
         .target(
             name: "Reflex",
-            dependencies: ["Echo", "FLEX"],
+            dependencies: ["Echo"],
             path: "Reflex",
             exclude: ["Info.plist"]
         ),
