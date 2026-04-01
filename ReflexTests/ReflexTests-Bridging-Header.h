@@ -3,3 +3,4 @@
 //
 
 #import "ReflexObjcTests.h"
+#import "FLEXMetadataExtras.h"
