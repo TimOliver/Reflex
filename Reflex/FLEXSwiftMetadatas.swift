@@ -121,24 +121,26 @@ public class SwiftIvar: FLEXIvar {
     
     private func structFieldNamesDict(from metadata: StructMetadata?) -> [String: [String]] {
         guard let metadata = metadata else { return [:] }
-        
+
         func typeAndLabels(from metadata: StructMetadata) -> (String, [String]) {
             let key = metadata.typeEncodingString
             let labels = metadata.fields.map { "\($0.type.description) \($0.name)" }
             return (key, labels)
         }
-        
-        let topLevel = typeAndLabels(from: metadata)
-        var mapping = [topLevel.0: topLevel.1]
-        
-        let childTypes = metadata.fields
-            .compactMap { $0.type.struct }
-            .map { typeAndLabels(from: $0) }
-        
-        for (key, labels) in childTypes {
+
+        func recurse(into metadata: StructMetadata, mapping: inout [String: [String]]) {
+            let (key, labels) = typeAndLabels(from: metadata)
+            guard mapping[key] == nil else { return }
             mapping[key] = labels
+            for field in metadata.fields {
+                if let child = field.type.struct {
+                    recurse(into: child, mapping: &mapping)
+                }
+            }
         }
-        
+
+        var mapping: [String: [String]] = [:]
+        recurse(into: metadata, mapping: &mapping)
         return mapping
     }
 }
@@ -162,12 +164,9 @@ public class SwiftProtocol: FLEXProtocol {
     }
     
     public override var objc_protocol: Protocol {
-        // Swift protocol requirements have no names (to my knowledge)
-        // and a Swift protocol is not an objc object, so returning
-        // this protocol is the best we can do, and has no drawbacks
-        return NSObjectProtocol.self
+        NSProtocolFromString(self.protocol.name) ?? NSObjectProtocol.self
     }
-    
+
     private lazy var _imagePath: String? = {
         var exeInfo: Dl_info! = nil
         if (dladdr(self.protocol.ptr, &exeInfo) != 0) {
@@ -175,18 +174,27 @@ public class SwiftProtocol: FLEXProtocol {
                 return String(cString: fname)
             }
         }
-        
+
         return nil
     }()
-    
-    private lazy var swiftProtocols: [ProtocolDescriptor] = []
-    
+
+    private lazy var _inheritedProtocols: [ProtocolDescriptor] = {
+        self.protocol.requirementSignature
+            .filter { $0.flags.kind == .protocol }
+            .map { $0.protocol }
+    }()
+
+    private lazy var _objcProtocol: FLEXProtocol? = {
+        guard let p = NSProtocolFromString(self.protocol.name) else { return nil }
+        return FLEXProtocol(p)
+    }()
+
     public override var imagePath: String? { self._imagePath }
-    
-    public override var protocols: [FLEXProtocol] { self.swiftProtocols.map(SwiftProtocol.init(protocol:)) }
-    public override var requiredMethods: [FLEXMethodDescription] { [] }
-    public override var optionalMethods: [FLEXMethodDescription] { [] }
-    
-    public override var requiredProperties: [FLEXProperty] { [] }
-    public override var optionalProperties: [FLEXProperty] { [] }
+
+    public override var protocols: [FLEXProtocol] { _inheritedProtocols.map(SwiftProtocol.init(protocol:)) }
+    public override var requiredMethods: [FLEXMethodDescription] { _objcProtocol?.requiredMethods ?? [] }
+    public override var optionalMethods: [FLEXMethodDescription] { _objcProtocol?.optionalMethods ?? [] }
+
+    public override var requiredProperties: [FLEXProperty] { _objcProtocol?.requiredProperties ?? [] }
+    public override var optionalProperties: [FLEXProperty] { _objcProtocol?.optionalProperties ?? [] }
 }

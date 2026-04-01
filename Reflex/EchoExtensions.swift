@@ -168,7 +168,13 @@ extension Metadata {
                 if self.enum.descriptor.numPayloadCases > 0 {
                     return .unknown
                 }
-                return .unknown // TODO: return proper sized int for enums?
+                switch self.vwt.size {
+                case 1: return .unsignedChar
+                case 2: return .unsignedShort
+                case 4: return .unsignedInt
+                case 8: return .unsignedLongLong
+                default: return .unknown
+                }
             
             case .optional:
                 // For optionals, use the encoding of the Wrapped type
@@ -195,6 +201,9 @@ extension Metadata {
     var typeEncodingString: String {
         switch self.typeEncoding {
             case .objcObject:
+                if let cls = KnownMetadata.classForStruct(self) {
+                    return FLEXTypeEncoding.encodeObjcObject(typeName: NSStringFromClass(cls))
+                }
                 return FLEXTypeEncoding.encodeObjcObject(typeName: self.description)
             case .structBegin:
                 switch self.kind {
