@@ -32,6 +32,9 @@ class ReflexTests: XCTestCase {
     }
     
     func testKVCGetters() {
+        // Also exercise the superclass-fallback path in ClassMetadata:
+        // asking Employee's metadata for a field that lives in Person
+        XCTAssertEqual(bob.name, employee.getValue(forKey: "name", from: bob))
         assertFieldsEqual(["position", "salary", "cubicleSize"], employeeFields)
         assertFieldsEqual(["name", "age"], personFields)
         
@@ -256,6 +259,123 @@ class ReflexTests: XCTestCase {
         XCTAssertNotNil(fullyNamed)
         XCTAssertEqual(fullyNamed?.protocols.count, 1)
         XCTAssertEqual(fullyNamed?.protocols.first?.name, "Named")
+    }
+
+    func testSuperMirror() {
+        let mirror = SwiftMirror(reflecting: bob)
+        let sup = mirror.superMirror
+        XCTAssertNotNil(sup)
+        XCTAssertEqual((sup as? SwiftMirror)?.className, NSStringFromClass(Person.self))
+    }
+
+    func testReflexError() {
+        let err = ReflexError.failedDynamicCast(src: Int.self, dest: String.self)
+        XCTAssertTrue(err.description.contains("Int"))
+        XCTAssertTrue(err.description.contains("String"))
+    }
+
+    func testTupleTypeEncoding() {
+        let meta = reflect((Int, String).self)
+        XCTAssertEqual(meta.typeEncoding, .structBegin)
+        let str = meta.typeEncodingString
+        XCTAssertTrue(str.hasPrefix("{"))
+        XCTAssertTrue(str.contains("q"))           // Int → "q"
+        XCTAssertTrue(str.contains("NSString"))    // String → @"NSString"
+    }
+
+    func testStructMetadataKVC() {
+        // StructMetadata KVC operates on memory within a class instance.
+        // Exercise it via Employee.cubicleSize, a struct-typed stored property on a class.
+        let emp = Employee(name: "Alice", age: 30, position: "Engineer")
+        let empMeta = reflectClass(Employee.self)!
+
+        // getValue for a struct-typed field
+        let size: Size = empMeta.getValue(forKey: "cubicleSize", from: emp)
+        XCTAssertEqual(size, emp.cubicleSize)
+
+        // getValueBox → toAny round-trip
+        let box = empMeta.getValueBox(forKey: "cubicleSize", from: emp)
+        XCTAssertEqual(box.toAny as? Size, emp.cubicleSize)
+    }
+
+    func testMetadataKindIsObject() {
+        XCTAssertTrue(reflect(Employee.self).kind.isObject)
+        XCTAssertFalse(reflect(Point.self).kind.isObject)
+        XCTAssertFalse(reflect(Direction.self).kind.isObject)
+    }
+
+    func testConformsTo() {
+        let sliderMeta = reflectClass(RFSlider.self)!
+        XCTAssertTrue(sliderMeta.conforms(to: Slidable.self))
+        XCTAssertFalse(sliderMeta.conforms(to: FullyNamed.self))
+    }
+
+    func testEnumPayload() {
+        let meta = reflect(Tagged.self) as! EnumMetadata
+
+        // No-payload case returns nil
+        let nothingTag = meta.getTag(for: Tagged.nothing)
+        XCTAssertEqual(nothingTag, UInt32(meta.descriptor.numPayloadCases))
+
+        // Payload case round-trips
+        let instance = Tagged.number(42)
+        let tag = meta.getTag(for: instance)
+        XCTAssertEqual(tag, 0) // .number is the first (index 0) payload case
+
+        let payload = meta.copyPayload(from: instance)
+        XCTAssertNotNil(payload)
+        XCTAssertEqual(payload?.value as? Int, 42)
+
+        XCTAssertNil(meta.copyPayload(from: Tagged.nothing))
+    }
+
+    func testSwiftIvarProperties() {
+        let mirror = SwiftMirror(reflecting: bob)
+        let nameIvar = mirror.ivars.first(where: { $0.name == "name" })!
+
+        XCTAssertGreaterThan(nameIvar.offset, 0)
+        XCTAssertGreaterThan(nameIvar.size, 0)
+        XCTAssertNotNil(nameIvar.imagePath)
+        XCTAssertFalse(nameIvar.details.isEmpty)
+        XCTAssertEqual(nameIvar.getPotentiallyUnboxedValue(bob) as? String, "Bob")
+    }
+
+    func testSwiftProtocolProperties() {
+        let slider = RFSlider(color: .red, frame: .zero)
+        let mirror = SwiftMirror(reflecting: slider)
+        let p = mirror.protocols.compactMap { $0 as? SwiftProtocol }
+            .first(where: { $0.name == "Slidable" })!
+
+        // These properties should all be accessible without crashing
+        _ = p.objc_protocol
+        _ = p.imagePath
+        _ = p.requiredMethods
+        _ = p.optionalMethods
+        _ = p.requiredProperties
+        _ = p.optionalProperties
+    }
+
+    func testExistentialTypeDescription() {
+        // Exercises ProtocolDescriptor.description via Metadata.description's .existential path
+        let meta = reflect(Slidable.self)
+        XCTAssertTrue(meta.description.contains("Slidable"))
+    }
+
+    func testFieldRecordDebugDescription() {
+        let record = employee.descriptor.fields.records.first!
+        XCTAssertFalse(record.debugDescription.isEmpty)
+    }
+
+    func testSetClassOptionalToNil() {
+        let holder = HolderWithRef()
+        let mirror = SwiftMirror(reflecting: holder)
+        let ivar = mirror.ivars.first(where: { $0.name == "value" })!
+
+        ivar.setValue(bob, on: holder)
+        XCTAssertNotNil(holder.value)
+
+        ivar.setValue(nil, on: holder)
+        XCTAssertNil(holder.value)
     }
 
     func testSwiftMirrorAvailable() {

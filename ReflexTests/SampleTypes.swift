@@ -63,6 +63,21 @@ class NamedThing: NSObject, FullyNamed {
     var fullName: String = ""
 }
 
+// Payload enum for getTag/copyPayload tests
+enum Tagged {
+    case number(Int)
+    case text(String)
+    case nothing
+}
+
+// Class with an optional class-typed property for nil-class-optional tests
+extension BoolHolder {
+    // Declared in an extension so we don't break the initializer
+}
+class HolderWithRef {
+    var value: Employee? = nil
+}
+
 class Person: Equatable {
     var name: String
     var age: Int
