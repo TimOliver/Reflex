@@ -15,7 +15,7 @@ public class SwiftMirror: NSObject, FLEXMirrorProtocol {
     
     /// Never a metaclass
     private let `class`: AnyClass
-    private let metadata: ClassMetadata
+    private let metadata: ClassMetadata?
     private var flexMirror: FLEXMirror {
         .init(reflecting: self.value)
     }
@@ -36,8 +36,8 @@ public class SwiftMirror: NSObject, FLEXMirrorProtocol {
         guard let supercls = class_getSuperclass(self.class) else {
             return nil
         }
-        
-        if reflectClass(supercls)!.isSwiftClass {
+
+        if reflectClass(supercls)?.isSwiftClass == true {
             return Self.init(reflecting: supercls)
         } else {
             return FLEXMirror(reflecting: supercls)
@@ -45,33 +45,43 @@ public class SwiftMirror: NSObject, FLEXMirrorProtocol {
     }
     
     required public init(reflecting objectOrClass: Any) {
-        let cls: AnyClass = object_getClass(objectOrClass)!
-        
         self.value = objectOrClass
+
+        guard let cls: AnyClass = object_getClass(objectOrClass) else {
+            // Value type (struct/enum) — provide a non-crashing empty mirror
+            self.isClass = false
+            self.className = String(describing: Swift.type(of: objectOrClass))
+            self.class = NSObject.self
+            self.metadata = nil
+            super.init()
+            return
+        }
+
         self.isClass = class_isMetaClass(cls)
         self.className = NSStringFromClass(cls)
-        
         self.class = self.isClass ? objectOrClass as! AnyClass : cls
-        self.metadata = reflectClass(self.class)!
-        
+        self.metadata = reflectClass(self.class)
+
         super.init()
         self.examine()
     }
     
     private func examine() {
-        let swiftIvars: [SwiftIvar] = self.metadata.shallowFields.map {
-            .init(field: $0, class: self.metadata)
+        guard let metadata = self.metadata else { return }
+
+        let swiftIvars: [SwiftIvar] = metadata.shallowFields.map {
+            .init(field: $0, class: metadata)
         }
-        
-        let swiftProtos: [SwiftProtocol] = self.metadata.conformances
+
+        let swiftProtos: [SwiftProtocol] = metadata.conformances
             .map(\.protocol)
             .map { .init(protocol: $0) }
-        
+
         let fm = self.flexMirror
         let ivarNames = Set(swiftIvars.map(\.name))
         self.ivars = swiftIvars + fm.ivars.filter { !ivarNames.contains($0.name) }
         self.protocols = swiftProtos + fm.protocols
-        
+
         self.properties = fm.properties
         self.classProperties = fm.classProperties
         self.methods = fm.methods
