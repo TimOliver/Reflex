@@ -422,7 +422,7 @@ class ReflexTests: XCTestCase {
         let meta = reflect(Int.self)
         let ptr = RawPointer.allocateBuffer(for: meta)
         defer { ptr.deallocate() }
-        XCTAssertEqual(ptr.pointee, 0) // freshly allocated bytes
+        XCTAssertEqual(ptr.load(as: UInt8.self), 0) // freshly allocated bytes
     }
 
     func testSwiftMirrorAvailable() {
