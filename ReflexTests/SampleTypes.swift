@@ -77,6 +77,11 @@ class Employee: Person {
     }
 }
 
+class BoolHolder {
+    var flag: Bool = false
+    var optionalCount: Int? = nil
+}
+
 protocol Slidable {
     var value: Double { get set }
 }

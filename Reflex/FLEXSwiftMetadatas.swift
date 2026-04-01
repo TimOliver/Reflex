@@ -93,7 +93,7 @@ public class SwiftIvar: FLEXIvar {
             let nilValue: Any
             
             switch kind {
-                case .enum:
+                case .enum, .optional:
                     nilValue = AnyExistentialContainer(nil: self.property.type as! EnumMetadata)
                 case .class:
                     nilValue = AnyExistentialContainer(nil: self.property.type as! ClassMetadata)

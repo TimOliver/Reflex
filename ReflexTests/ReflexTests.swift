@@ -116,7 +116,54 @@ class ReflexTests: XCTestCase {
     }
     
     func testValueDescriptions() {
-        
+
+    }
+
+    // MARK: - Regression tests for previously crashing paths
+
+    func testBoolTypeEncoding() {
+        let holder = BoolHolder()
+        let mirror = SwiftMirror(reflecting: holder)
+        let flagIvar = mirror.ivars.first(where: { $0.name == "flag" })!
+
+        XCTAssertEqual(flagIvar.type, .cBool)
+        XCTAssertEqual(flagIvar.typeEncoding, "B")
+    }
+
+    func testBoolKVC() {
+        let holder = BoolHolder()
+        let mirror = SwiftMirror(reflecting: holder)
+        let flagIvar = mirror.ivars.first(where: { $0.name == "flag" })!
+
+        XCTAssertEqual(flagIvar.getValue(holder) as? Bool, false)
+        flagIvar.setValue(true, on: holder)
+        XCTAssertEqual(holder.flag, true)
+        XCTAssertEqual(flagIvar.getValue(holder) as? Bool, true)
+    }
+
+    func testValueTypeMirrorDoesNotCrash() {
+        // Passing a struct to SwiftMirror should return an empty mirror, not crash
+        let point = Point(x: 3, y: 7)
+        let mirror = SwiftMirror(reflecting: point)
+
+        XCTAssertFalse(mirror.isClass)
+        XCTAssertEqual(mirror.className, "Point")
+        XCTAssertTrue(mirror.ivars.isEmpty)
+        XCTAssertTrue(mirror.properties.isEmpty)
+        XCTAssertTrue(mirror.protocols.isEmpty)
+    }
+
+    func testSetOptionalToNil() {
+        let holder = BoolHolder()
+        let mirror = SwiftMirror(reflecting: holder)
+        let optIvar = mirror.ivars.first(where: { $0.name == "optionalCount" })!
+
+        optIvar.setValue(42, on: holder)
+        XCTAssertEqual(holder.optionalCount, 42)
+
+        // Previously crashed: Optional<T> has kind .optional, not .enum
+        optIvar.setValue(nil, on: holder)
+        XCTAssertNil(holder.optionalCount)
     }
     
     func testTypeEncodings() {
