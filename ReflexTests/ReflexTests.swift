@@ -138,8 +138,6 @@ class ReflexTests: XCTestCase {
         XCTAssertEqual(reflect(String?.self).typeEncodingString, "@\"NSString\"")
     }
 
-    // MARK: - Regression tests for previously crashing paths
-
     func testBoolTypeEncoding() {
         let holder = BoolHolder()
         let mirror = SwiftMirror(reflecting: holder)
@@ -207,8 +205,6 @@ class ReflexTests: XCTestCase {
             XCTFail()
         }
     }
-    
-    // MARK: - Mid-priority fixes
 
     func testEnumTypeEncoding() {
         // Direction has 4 no-payload cases → stored as UInt8 (1 byte)
@@ -377,6 +373,56 @@ class ReflexTests: XCTestCase {
 
         ivar.setValue(nil, on: holder)
         XCTAssertNil(holder.value)
+    }
+
+    func testIsNonTriviallyBridgedToObjc() {
+        // Plain Foundation struct
+        XCTAssertTrue(reflect(String.self).isNonTriviallyBridgedToObjc)
+        // Optional of a Foundation struct walks through the .optional branch
+        XCTAssertTrue(reflect(String?.self).isNonTriviallyBridgedToObjc)
+        // Non-bridged types
+        XCTAssertFalse(reflect(Int.self).isNonTriviallyBridgedToObjc)
+        XCTAssertFalse(reflect(Point.self).isNonTriviallyBridgedToObjc)
+        XCTAssertFalse(reflect(Employee.self).isNonTriviallyBridgedToObjc)
+    }
+
+    func testClassTypeEncodingString() {
+        // Class types hit the fallback in typeEncodingString (not a Foundation struct, not optional)
+        let meta = reflect(Employee.self)
+        XCTAssertEqual(meta.typeEncoding, .objcObject)
+        let str = meta.typeEncodingString
+        XCTAssertTrue(str.hasPrefix("@\""))
+        XCTAssertTrue(str.contains("Employee"))
+    }
+
+    func testEnumMetadataFields() {
+        // EnumMetadata.fields delegates to shallowFields, which filters to payload cases
+        let meta = reflect(Tagged.self) as! EnumMetadata
+        let fields = meta.fields
+        // Tagged has 2 payload cases: number(Int) and text(String); nothing has no payload
+        XCTAssertEqual(fields.count, 2)
+        let names = Set(fields.map(\.name))
+        XCTAssertTrue(names.contains("number"))
+        XCTAssertTrue(names.contains("text"))
+    }
+
+    func testContainerIsEmpty() {
+        // A nil class-optional container has all-zero data → isEmpty == true
+        let classMeta = reflectClass(Employee.self)!
+        let nilContainer = AnyExistentialContainer(nil: classMeta)
+        XCTAssertTrue(nilContainer.isEmpty)
+    }
+
+    func testRetainIfObject() {
+        XCTAssertTrue(Unmanaged<AnyObject>.retainIfObject(bob))
+        XCTAssertFalse(Unmanaged<AnyObject>.retainIfObject(42))
+    }
+
+    func testRawPointerAllocateBuffer() {
+        let meta = reflect(Int.self)
+        let ptr = RawPointer.allocateBuffer(for: meta)
+        defer { ptr.deallocate() }
+        XCTAssertEqual(ptr.pointee, 0) // freshly allocated bytes
     }
 
     func testSwiftMirrorAvailable() {
