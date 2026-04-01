@@ -32,6 +32,37 @@ class Sprite {
     let boundingBox: Rect = .zero
 }
 
+// Three-level nested struct for deep-recursion test
+struct Segment {
+    var start: Point
+    var end: Point
+}
+
+struct Path {
+    var first: Segment
+}
+
+class PathHolder {
+    let path = Path(first: Segment(start: Point(), end: Point()))
+}
+
+// Enum type encoding tests
+enum Direction { case north, south, east, west }
+
+// Protocol inheritance for SwiftProtocol test
+protocol Named {
+    var name: String { get }
+}
+
+protocol FullyNamed: Named {
+    var fullName: String { get }
+}
+
+class NamedThing: NSObject, FullyNamed {
+    var name: String = ""
+    var fullName: String = ""
+}
+
 class Person: Equatable {
     var name: String
     var age: Int

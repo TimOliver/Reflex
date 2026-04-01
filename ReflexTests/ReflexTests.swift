@@ -189,6 +189,59 @@ class ReflexTests: XCTestCase {
         }
     }
     
+    // MARK: - Mid-priority fixes
+
+    func testEnumTypeEncoding() {
+        // Direction has 4 no-payload cases → stored as UInt8 (1 byte)
+        let dirMeta = reflect(Direction.self)
+        XCTAssertEqual(dirMeta.typeEncoding, .unsignedChar)
+    }
+
+    func testFoundationStructTypeEncodingString() {
+        // String bridges to NSString — encoding should use the ObjC class name
+        let stringMeta = reflect(String.self)
+        XCTAssertEqual(stringMeta.typeEncodingString, "@\"NSString\"")
+
+        let arrayMeta = reflect([Int].self)
+        XCTAssertEqual(arrayMeta.typeEncodingString, "@\"NSArray\"")
+    }
+
+    func testStructFieldLabelsDeepRecursion() {
+        // Path → Segment → Point is three levels deep.
+        // The old code only walked one level (Path → Segment), missing Point.
+        let mirror = SwiftMirror(reflecting: PathHolder())
+        let pathIvar = mirror.ivars.first(where: { $0.name == "path" })!
+
+        let info = pathIvar.auxiliaryInfo(forKey: FLEXAuxiliarynfoKeyFieldLabels)
+        guard let labels = info as? [String: [String]] else {
+            XCTFail("Expected [String: [String]]")
+            return
+        }
+
+        // Three distinct struct types: Path, Segment, Point
+        XCTAssertEqual(labels.count, 3)
+        // Point must be present — it's 2 levels deep from Path
+        XCTAssertEqual(labels["{Point=qq}"], ["Int x", "Int y"])
+    }
+
+    func testSwiftProtocolName() {
+        let slider = RFSlider(color: .red, frame: .zero)
+        let mirror = SwiftMirror(reflecting: slider)
+        let p = mirror.protocols.compactMap { $0 as? SwiftProtocol }
+            .first(where: { $0.name == "Slidable" })
+        XCTAssertNotNil(p)
+    }
+
+    func testSwiftProtocolInheritedProtocols() {
+        let thing = NamedThing()
+        let mirror = SwiftMirror(reflecting: thing)
+        let fullyNamed = mirror.protocols.compactMap { $0 as? SwiftProtocol }
+            .first(where: { $0.name == "FullyNamed" })
+        XCTAssertNotNil(fullyNamed)
+        XCTAssertEqual(fullyNamed?.protocols.count, 1)
+        XCTAssertEqual(fullyNamed?.protocols.first?.name, "Named")
+    }
+
     func testSwiftMirrorAvailable() {
         XCTAssertNotNil(NSClassFromString("FLEXSwiftMirror"))
     }
