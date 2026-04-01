@@ -330,14 +330,15 @@ class ReflexTests: XCTestCase {
     }
 
     func testSwiftIvarProperties() {
+        // Use a field that belongs directly to Employee (not inherited from Person)
         let mirror = SwiftMirror(reflecting: bob)
-        let nameIvar = mirror.ivars.first(where: { $0.name == "name" })!
+        let positionIvar = mirror.ivars.first(where: { $0.name == "position" })!
 
-        XCTAssertGreaterThan(nameIvar.offset, 0)
-        XCTAssertGreaterThan(nameIvar.size, 0)
-        XCTAssertNotNil(nameIvar.imagePath)
-        XCTAssertFalse(nameIvar.details.isEmpty)
-        XCTAssertEqual(nameIvar.getPotentiallyUnboxedValue(bob) as? String, "Bob")
+        XCTAssertGreaterThan(positionIvar.offset, 0)
+        XCTAssertGreaterThan(positionIvar.size, 0)
+        XCTAssertNotNil(positionIvar.imagePath)
+        XCTAssertFalse(positionIvar.details.isEmpty)
+        XCTAssertEqual(positionIvar.getPotentiallyUnboxedValue(bob) as? String, "Programmer")
     }
 
     func testSwiftProtocolProperties() {
