@@ -93,10 +93,16 @@ public class SwiftIvar: FLEXIvar {
             let nilValue: Any
             
             switch kind {
-                case .enum, .optional:
-                    nilValue = AnyExistentialContainer(nil: self.property.type as! EnumMetadata)
+                case .optional:
+                    // Zeroing memory gives the wrong result: for Optional<Int>, all-zeros
+                    // means .some(0). Use _openExistential to create a properly-typed nil.
+                    let wrappedMeta = (self.property.type as! EnumMetadata).genericMetadata.first!
+                    func makeNil<T>(_: T.Type) -> Any { Optional<T>.none as Any }
+                    nilValue = _openExistential(wrappedMeta.type, do: makeNil(_:))
+                case .enum:
+                    nilValue = AnyExistentialContainer(nil: self.property.type as! EnumMetadata).toAny
                 case .class:
-                    nilValue = AnyExistentialContainer(nil: self.property.type as! ClassMetadata)
+                    nilValue = AnyExistentialContainer(nil: self.property.type as! ClassMetadata).toAny
                 default:
                     fatalError("Attempting to set nil to non-optional property")
             }
@@ -133,7 +139,8 @@ public class SwiftIvar: FLEXIvar {
             guard mapping[key] == nil else { return }
             mapping[key] = labels
             for field in metadata.fields {
-                if let child = field.type.struct {
+                // Only recurse into nested custom structs; skip primitives and bridged types
+                if let child = field.type.struct, child.typeEncoding == .structBegin {
                     recurse(into: child, mapping: &mapping)
                 }
             }

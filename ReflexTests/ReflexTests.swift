@@ -284,7 +284,7 @@ class ReflexTests: XCTestCase {
         XCTAssertEqual(tagp.type, .longLong)
         XCTAssertEqual(tagp.typeEncoding, "q")
         XCTAssertEqual(tagp.description, "NSInteger tag")
-        XCTAssertEqual(titlep.description, "String title")
+        XCTAssertEqual(titlep.description, "NSString title")
         XCTAssertEqual(subtitlep.description, "String? subtitle")
         XCTAssertEqual(sizep.description, "Size cubicleSize")
     }

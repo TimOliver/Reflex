@@ -48,7 +48,7 @@ public class SwiftMirror: NSObject, FLEXMirrorProtocol {
         self.value = objectOrClass
 
         guard let cls: AnyClass = object_getClass(objectOrClass) else {
-            // Value type (struct/enum) — provide a non-crashing empty mirror
+            // No class at all (pure value type with no ObjC bridging)
             self.isClass = false
             self.className = String(describing: Swift.type(of: objectOrClass))
             self.class = NSObject.self
@@ -57,11 +57,27 @@ public class SwiftMirror: NSObject, FLEXMirrorProtocol {
             return
         }
 
-        self.isClass = class_isMetaClass(cls)
-        self.className = NSStringFromClass(cls)
-        self.class = self.isClass ? objectOrClass as! AnyClass : cls
-        self.metadata = reflectClass(self.class)
+        // For class objects (e.g. Employee.self), cls is the metaclass; the class itself is objectOrClass.
+        // For instances (e.g. Employee()), cls is the class.
+        let isMetaClass = class_isMetaClass(cls)
+        let actualClass: AnyClass = isMetaClass ? objectOrClass as! AnyClass : cls
 
+        // Guard: only proceed for actual Swift classes.
+        // ObjC classes and __SwiftValue boxes (which wrap non-bridgeable value types)
+        // have isSwiftClass == false and crash when Echo accesses descriptor.
+        guard let meta = reflectClass(actualClass), meta.isSwiftClass else {
+            self.isClass = false
+            self.className = String(describing: Swift.type(of: objectOrClass))
+            self.class = NSObject.self
+            self.metadata = nil
+            super.init()
+            return
+        }
+
+        self.isClass = isMetaClass
+        self.className = NSStringFromClass(cls)
+        self.class = actualClass
+        self.metadata = meta
         super.init()
         self.examine()
     }
