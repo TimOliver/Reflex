@@ -34,7 +34,7 @@ extension KnownMetadata.Builtin {
     private static var _types: [Any.Type] = [
         Int8.self, Int16.self, Int32.self, Int64.self, Int.self,
         UInt8.self, UInt16.self, UInt32.self, UInt64.self, UInt.self,
-        Float32.self, Float64.self, Float.self, Double.self, CGFloat.self,
+        Float.self, Double.self, CGFloat.self,
         Bool.self,
     ]
     
@@ -102,12 +102,6 @@ extension Metadata {
     private var `enum`: EnumMetadata { self as! EnumMetadata }
     private var `struct`: StructMetadata { self as! StructMetadata }
     private var tuple: TupleMetadata { self as! TupleMetadata }
-    
-    /// This doesn't actually work very well since Double etc aren't opaque,
-    /// but instead contain a single member that is itself opaque
-    private var isBuiltin_alt: Bool {
-        return self is OpaqueMetadata
-    }
     
     /// This is `true` for any "primitive" type
     var isBuiltin: Bool {
@@ -201,6 +195,10 @@ extension Metadata {
     var typeEncodingString: String {
         switch self.typeEncoding {
             case .objcObject:
+                // Optional<FoundationStruct> inherits the encoding of its wrapped type
+                if self.kind == .optional {
+                    return self.enum.optionalType!.typeEncodingString
+                }
                 if let cls = KnownMetadata.classForStruct(self) {
                     return FLEXTypeEncoding.encodeObjcObject(typeName: NSStringFromClass(cls))
                 }
@@ -216,7 +214,7 @@ extension Metadata {
                     case .optional:
                         return self.enum.optionalType!.typeEncodingString
                     default:
-                        fatalError()
+                        fatalError("typeEncodingString: unexpected kind \(self.kind) for .structBegin encoding")
                 }
             default:
                 // For now, convert type encoding char into a string
@@ -394,8 +392,12 @@ extension ClassMetadata {
         // Check if we need to do a cast first; sometimes things like
         // Double or Int will be boxed up as NSNumber first.
         let type = self.fieldType(for: key)!
-        if type.type != box.type, let cast = try? type.dynamicCast(from: value) {
-            value = cast
+        if type.type != box.type {
+            if let cast = try? type.dynamicCast(from: value) {
+                value = cast
+            } else {
+                assertionFailure("set(value:forKey:pointer:): could not cast \(Swift.type(of: value)) to field type \(type.type) for key '\(key)'")
+            }
         }
         
         ptr.storeBytes(of: value, type: type, offset: offset)
@@ -448,11 +450,19 @@ extension AnyExistentialContainer {
         self.store(value: valuePtr)
     }
     
+    /// Creates an existential container holding `Optional<T>.none` for an enum-based optional.
+    /// Uses `_openExistential` to produce the correct typed nil rather than zeroing memory,
+    /// since zero-bytes represent `.some(0)` for types like `Optional<Int>`.
     init(nil optionalType: EnumMetadata) {
-        self = .init(metadata: optionalType)
-        self.zeroMemory()
+        let wrappedMeta = optionalType.genericMetadata.first!
+        func makeNil<T>(_: T.Type) -> AnyExistentialContainer {
+            container(for: Optional<T>.none as Any)
+        }
+        self = _openExistential(wrappedMeta.type, do: makeNil(_:))
     }
-    
+
+    /// Creates an existential container holding `Optional<T>.none` for a class optional.
+    /// For class optionals, nil is a null pointer (all-zeros), so zeroMemory() is correct.
     init(nil optionalType: ClassMetadata) {
         self = .init(metadata: optionalType)
         self.zeroMemory()

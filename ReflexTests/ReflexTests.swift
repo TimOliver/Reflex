@@ -116,7 +116,23 @@ class ReflexTests: XCTestCase {
     }
     
     func testValueDescriptions() {
+        // Primitives
+        XCTAssertEqual(reflect(Int.self).typeEncodingString, "q")
+        XCTAssertEqual(reflect(Bool.self).typeEncodingString, "B")
+        XCTAssertEqual(reflect(Double.self).typeEncodingString, "d")
 
+        // Foundation structs encode as their ObjC counterparts
+        XCTAssertEqual(reflect(String.self).typeEncodingString, "@\"NSString\"")
+        XCTAssertEqual(reflect(Date.self).typeEncodingString, "@\"NSDate\"")
+        XCTAssertEqual(reflect(Data.self).typeEncodingString, "@\"NSData\"")
+        XCTAssertEqual(reflect(URL.self).typeEncodingString, "@\"NSURL\"")
+
+        // Custom struct
+        XCTAssertEqual(reflect(Point.self).typeEncodingString, "{Point=qq}")
+
+        // Optional unwraps to wrapped type's encoding
+        XCTAssertEqual(reflect(Int?.self).typeEncodingString, "q")
+        XCTAssertEqual(reflect(String?.self).typeEncodingString, "@\"NSString\"")
     }
 
     // MARK: - Regression tests for previously crashing paths
@@ -285,7 +301,7 @@ class ReflexTests: XCTestCase {
         XCTAssertEqual(tagp.typeEncoding, "q")
         XCTAssertEqual(tagp.description, "NSInteger tag")
         XCTAssertEqual(titlep.description, "NSString title")
-        XCTAssertEqual(subtitlep.description, "String? subtitle")
+        XCTAssertEqual(subtitlep.description, "NSString subtitle")
         XCTAssertEqual(sizep.description, "Size cubicleSize")
     }
 }

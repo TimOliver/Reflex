@@ -175,13 +175,10 @@ public class SwiftProtocol: FLEXProtocol {
     }
 
     private lazy var _imagePath: String? = {
-        var exeInfo: Dl_info! = nil
-        if (dladdr(self.protocol.ptr, &exeInfo) != 0) {
-            if let fname = exeInfo.dli_fname {
-                return String(cString: fname)
-            }
+        var exeInfo = Dl_info()
+        if dladdr(self.protocol.ptr, &exeInfo) != 0, let fname = exeInfo.dli_fname {
+            return String(cString: fname)
         }
-
         return nil
     }()
 
