@@ -1,5 +1,5 @@
 //
-//  FLExtensions.swift
+//  FLExtensionsTests.swift
 //
 //  Copyright (c) Flipboard, Inc. (2014–2016); Tanner Bennett (2021-2026)
 //  All rights reserved.
@@ -32,18 +32,24 @@
 //  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 //  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import FLEX
+import XCTest
+@testable import Reflex
 
-extension FLEXTypeEncoding {
-    static func encodeObjcObject(typeName: String) -> String {
-        return "@\"\(typeName)\""
+//  Tests for FLExtensions.swift:
+//  FLEXTypeEncoding.encodeObjcObject and encodeStruct
+class FLExtensionsTests: XCTestCase {
+
+    func testEncodeObjcObject() {
+        XCTAssertEqual(FLEXTypeEncoding.encodeObjcObject(typeName: "NSString"), "@\"NSString\"")
     }
-    
-    static func encodeStruct(typeName: String? = nil, fields: [String]) -> String {
-        if let typeName = typeName {
-            return "{\(typeName)=\(fields.joined())}"
-        }
-        
-        return "{\(fields.joined())}"
+
+    func testEncodeStructWithTypeName() {
+        // if let typeName = typeName { } branch
+        XCTAssertEqual(FLEXTypeEncoding.encodeStruct(typeName: "Point", fields: ["q", "q"]), "{Point=qq}")
+    }
+
+    func testEncodeStructWithoutTypeName() {
+        // nil typeName falls through to the bare-fields path
+        XCTAssertEqual(FLEXTypeEncoding.encodeStruct(fields: ["q", "d"]), "{qd}")
     }
 }

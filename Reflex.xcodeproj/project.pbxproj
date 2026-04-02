@@ -48,6 +48,8 @@
 		AA00000000000012 /* PointerExtensionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointerExtensionsTests.swift; sourceTree = "<group>"; };
 		AA00000000000013 /* FLEXSwiftMirrorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FLEXSwiftMirrorTests.swift; sourceTree = "<group>"; };
 		AA00000000000014 /* FLEXSwiftMetadatasTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FLEXSwiftMetadatasTests.swift; sourceTree = "<group>"; };
+		AA00000000000015 /* FLExtensionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FLExtensionsTests.swift; sourceTree = "<group>"; };
+		AA00000000000005 /* FLExtensionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000015 /* FLExtensionsTests.swift */; };
 		C30D297C2620020B00D89649 /* Reflex.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Reflex.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C30D297F2620020B00D89649 /* Reflex.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Reflex.h; sourceTree = "<group>"; };
 		C30D29802620020B00D89649 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -144,6 +146,7 @@
 				AA00000000000012 /* PointerExtensionsTests.swift */,
 				AA00000000000013 /* FLEXSwiftMirrorTests.swift */,
 				AA00000000000014 /* FLEXSwiftMetadatasTests.swift */,
+				AA00000000000015 /* FLExtensionsTests.swift */,
 				C3EA55C626279A7E007611C8 /* ReflexObjcTests.h */,
 				C3EA55C726279A7E007611C8 /* ReflexObjcTests.mm */,
 			);
@@ -328,6 +331,7 @@
 				AA00000000000002 /* PointerExtensionsTests.swift in Sources */,
 				AA00000000000003 /* FLEXSwiftMirrorTests.swift in Sources */,
 				AA00000000000004 /* FLEXSwiftMetadatasTests.swift in Sources */,
+				AA00000000000005 /* FLExtensionsTests.swift in Sources */,
 				C3EA55C826279A7E007611C8 /* ReflexObjcTests.mm in Sources */,
 				C3442AB02624D62800693972 /* SampleTypes.swift in Sources */,
 			);
