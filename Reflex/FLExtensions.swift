@@ -35,15 +35,30 @@
 import FLEX
 
 extension FLEXTypeEncoding {
+    /// Returns the Objective-C type encoding string for an object of the given class name.
+    ///
+    /// For example, `encodeObjcObject(typeName: "NSString")` produces `@"NSString"`.
+    ///
+    /// - Parameter typeName: The Objective-C class name to embed in the encoding.
+    /// - Returns: A type encoding string of the form `@"TypeName"`.
     static func encodeObjcObject(typeName: String) -> String {
         return "@\"\(typeName)\""
     }
-    
+
+    /// Returns the Objective-C type encoding string for a struct with the given field encodings.
+    ///
+    /// When `typeName` is provided the result has the form `{TypeName=fields...}`.
+    /// When `typeName` is `nil` the type name is omitted and the result has the form `{fields...}`.
+    ///
+    /// - Parameters:
+    ///   - typeName: An optional name to embed in the struct encoding. Pass `nil` to omit it.
+    ///   - fields: An array of type encoding strings for each field, in declaration order.
+    /// - Returns: A struct type encoding string.
     static func encodeStruct(typeName: String? = nil, fields: [String]) -> String {
         if let typeName = typeName {
             return "{\(typeName)=\(fields.joined())}"
         }
-        
+
         return "{\(fields.joined())}"
     }
 }
