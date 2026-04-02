@@ -82,7 +82,7 @@ Then add `"Reflex"` to your target's dependencies array.
 
 # Credits
 
-`Reflex` was created by [Tanner Bennett](https://github.com/tannerbennett), and builds upon [Echo](https://github.com/Azoy/Echo) by [Alejandro Alonso](https://github.com/Azoy.
+`Reflex` was created by [Tanner Bennett](https://github.com/tannerbennett), and builds upon [Echo](https://github.com/Azoy/Echo) by [Alejandro Alonso](https://github.com/Azoy).
 
 # License
 
