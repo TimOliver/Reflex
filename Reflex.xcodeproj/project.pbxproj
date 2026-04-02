@@ -10,15 +10,15 @@
 		2292A1702F7CEFBC00D0E238 /* FLEX in Frameworks */ = {isa = PBXBuildFile; productRef = 2292A16E2F7CEFBC00D0E238 /* FLEX */; };
 		2292A1712F7CEFBC00D0E238 /* Echo in Frameworks */ = {isa = PBXBuildFile; productRef = 2292A16F2F7CEFBC00D0E238 /* Echo */; };
 		2292A1732F7CEFBC00D0E238 /* FLEX in Frameworks */ = {isa = PBXBuildFile; productRef = 2292A1722F7CEFBC00D0E238 /* FLEX */; };
+		AA00000000000001 /* EchoExtensionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000011 /* EchoExtensionsTests.swift */; };
+		AA00000000000002 /* PointerExtensionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000012 /* PointerExtensionsTests.swift */; };
+		AA00000000000003 /* FLEXSwiftMirrorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000013 /* FLEXSwiftMirrorTests.swift */; };
+		AA00000000000004 /* FLEXSwiftMetadatasTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000014 /* FLEXSwiftMetadatasTests.swift */; };
 		C30D29862620020B00D89649 /* Reflex.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C30D297C2620020B00D89649 /* Reflex.framework */; };
 		C30D298D2620020B00D89649 /* Reflex.h in Headers */ = {isa = PBXBuildFile; fileRef = C30D297F2620020B00D89649 /* Reflex.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		C3442AB02624D62800693972 /* SampleTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3442AAF2624D62800693972 /* SampleTypes.swift */; };
 		C3442AC22624D83700693972 /* FLEXSwiftMirror.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3442AC12624D83700693972 /* FLEXSwiftMirror.swift */; };
 		C34879E02724F34100815379 /* ReflexTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34879DF2724F34100815379 /* ReflexTests.swift */; };
-		AA00000000000001 /* EchoExtensionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000011 /* EchoExtensionsTests.swift */; };
-		AA00000000000002 /* PointerExtensionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000012 /* PointerExtensionsTests.swift */; };
-		AA00000000000003 /* FLEXSwiftMirrorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000013 /* FLEXSwiftMirrorTests.swift */; };
-		AA00000000000004 /* FLEXSwiftMetadatasTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA00000000000014 /* FLEXSwiftMetadatasTests.swift */; };
 		C34879E92725118000815379 /* EchoExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34879E72725118000815379 /* EchoExtensions.swift */; };
 		C34879EA2725118000815379 /* PointerExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34879E82725118000815379 /* PointerExtensions.swift */; };
 		C34879FA2725FE6600815379 /* FLEXSwiftMetadatas.swift in Sources */ = {isa = PBXBuildFile; fileRef = C34879F92725FE6600815379 /* FLEXSwiftMetadatas.swift */; };
@@ -43,6 +43,11 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		222DBA4C2F7E0B5700DEC76D /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		AA00000000000011 /* EchoExtensionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EchoExtensionsTests.swift; sourceTree = "<group>"; };
+		AA00000000000012 /* PointerExtensionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointerExtensionsTests.swift; sourceTree = "<group>"; };
+		AA00000000000013 /* FLEXSwiftMirrorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FLEXSwiftMirrorTests.swift; sourceTree = "<group>"; };
+		AA00000000000014 /* FLEXSwiftMetadatasTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FLEXSwiftMetadatasTests.swift; sourceTree = "<group>"; };
 		C30D297C2620020B00D89649 /* Reflex.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Reflex.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C30D297F2620020B00D89649 /* Reflex.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Reflex.h; sourceTree = "<group>"; };
 		C30D29802620020B00D89649 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -51,10 +56,6 @@
 		C3442AAF2624D62800693972 /* SampleTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleTypes.swift; sourceTree = "<group>"; };
 		C3442AC12624D83700693972 /* FLEXSwiftMirror.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FLEXSwiftMirror.swift; sourceTree = "<group>"; };
 		C34879DF2724F34100815379 /* ReflexTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReflexTests.swift; sourceTree = "<group>"; };
-		AA00000000000011 /* EchoExtensionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EchoExtensionsTests.swift; sourceTree = "<group>"; };
-		AA00000000000012 /* PointerExtensionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointerExtensionsTests.swift; sourceTree = "<group>"; };
-		AA00000000000013 /* FLEXSwiftMirrorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FLEXSwiftMirrorTests.swift; sourceTree = "<group>"; };
-		AA00000000000014 /* FLEXSwiftMetadatasTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FLEXSwiftMetadatasTests.swift; sourceTree = "<group>"; };
 		C34879E72725118000815379 /* EchoExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = EchoExtensions.swift; sourceTree = "<group>"; };
 		C34879E82725118000815379 /* PointerExtensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PointerExtensions.swift; sourceTree = "<group>"; };
 		C34879F92725FE6600815379 /* FLEXSwiftMetadatas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FLEXSwiftMetadatas.swift; sourceTree = "<group>"; };
@@ -99,6 +100,7 @@
 		C30D29722620020B00D89649 = {
 			isa = PBXGroup;
 			children = (
+				222DBA4C2F7E0B5700DEC76D /* README.md */,
 				C3FBA5472741ACE700FBD76E /* libflex.tbd */,
 				C30D297E2620020B00D89649 /* Reflex */,
 				C30D29892620020B00D89649 /* ReflexTests */,

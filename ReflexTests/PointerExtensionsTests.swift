@@ -30,7 +30,7 @@ class PointerExtensionsTests: XCTestCase {
     }
 
     func testRawPointerSubscriptSetter() {
-        let ptr = RawPointer.allocateBuffer(for: reflect(Int.self))
+        var ptr = RawPointer.allocateBuffer(for: reflect(Int.self))
         defer { ptr.deallocate() }
         ptr[0] = 99 as Int
         let readBack: Int = ptr[0]
