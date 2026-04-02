@@ -75,6 +75,29 @@ class FLEXSwiftMirrorTests: XCTestCase {
         XCTAssertEqual((sup as? SwiftMirror)?.className, NSStringFromClass(Person.self))
     }
 
+    func testSuperMirrorReturnsNil() {
+        // NSObject has no superclass → class_getSuperclass returns nil → superMirror is nil
+        let mirror = SwiftMirror(reflecting: NSObject())
+        XCTAssertNil(mirror.superMirror)
+    }
+
+    func testSuperMirrorReturnsObjCMirror() {
+        // RFSlider's superclass is UIView (ObjC), so superMirror returns a FLEXMirror, not SwiftMirror
+        let mirror = SwiftMirror(reflecting: RFSlider(color: .red, frame: .zero))
+        let sup = mirror.superMirror
+        XCTAssertNotNil(sup)
+        XCTAssertNil(sup as? SwiftMirror)
+    }
+
+    func testNilObjcObjectMirrorDoesNotCrash() {
+        // A nil NSObject? has a null ObjC class pointer → object_getClass returns nil →
+        // hits the first guard in init and returns an empty mirror
+        let nilObj: NSObject? = nil
+        let mirror = SwiftMirror(reflecting: nilObj as Any)
+        XCTAssertFalse(mirror.isClass)
+        XCTAssertTrue(mirror.ivars.isEmpty)
+    }
+
     func testSwiftMirrorAvailable() {
         XCTAssertNotNil(NSClassFromString("FLEXSwiftMirror"))
     }

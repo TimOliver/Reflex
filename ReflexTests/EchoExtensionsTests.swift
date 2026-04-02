@@ -285,6 +285,34 @@ class EchoExtensionsTests: ReflexTests {
         }
     }
 
+    // MARK: - Field offset / ivar offset nil paths
+
+    func testFieldOffsetNilForMissingKey() {
+        // Covers the `return nil` branch in ContextualNominalType.fieldOffset(for:)
+        let meta = reflectStruct(Point.self)!
+        XCTAssertNil(meta.fieldOffset(for: "nonExistent"))
+    }
+
+    func testIvarOffsetNilForMissingObjCKey() {
+        // Covers return nil in objcIvar (guard on firstIndex) and ivarOffset (guard on objcIvar)
+        let meta = reflectClass(RFSlider.self)!
+        XCTAssertNil(meta.ivarOffset(for: "nonExistentProperty"))
+    }
+
+    func testKVCSetSuperclassRecursion() {
+        // employee.set for "name" (a Person field) exercises ClassMetadata.set superclass-recursion
+        let emp = Employee(name: "Old", age: 30, position: "Dev")
+        employee.set(value: "New" as Any, forKey: "name", pointer: emp~)
+        XCTAssertEqual(emp.name, "New")
+    }
+
+    func testKVCSetDynamicCastSuccess() {
+        // NSNumber ≠ Int → enters type-mismatch branch; NSNumber→Int bridging succeeds
+        let emp = Employee(name: "Test", age: 0, position: "Dev")
+        person.set(value: NSNumber(value: 30), forKey: "age", pointer: emp~)
+        XCTAssertEqual(emp.age, 30)
+    }
+
     // MARK: - Dynamic cast / ReflexError
 
     func testDynamicCastFailure() {
