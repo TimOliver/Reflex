@@ -70,6 +70,12 @@ enum Tagged {
     case nothing
 }
 
+// Large struct (4×Int = 32 bytes) — exceeds the 24-byte existential inline buffer,
+// forcing AnyExistentialContainer.getValueBuffer() to allocate a heap box
+struct FourInts {
+    var a: Int = 1, b: Int = 2, c: Int = 3, d: Int = 4
+}
+
 // Class with an optional class-typed property for nil-class-optional tests
 extension BoolHolder {
     // Declared in an extension so we don't break the initializer

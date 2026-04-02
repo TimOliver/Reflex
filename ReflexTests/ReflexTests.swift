@@ -413,9 +413,139 @@ class ReflexTests: XCTestCase {
         XCTAssertTrue(nilContainer.isEmpty)
     }
 
+    func testOptionalStructTypeEncodingString() {
+        // Optional<CustomStruct> has typeEncoding == .structBegin (delegates to wrapped type)
+        // and kind == .optional — hits implicit closure #3 in typeEncodingString
+        XCTAssertEqual(reflect(Point?.self).typeEncodingString, "{Point=qq}")
+    }
+
+    func testStructMetadataKVCViaPointer() {
+        // StructMetadata KVC uses `object~` (unsafeBitCast to RawPointer).
+        // Passing a RawPointer as O is safe: it's pointer-sized, so the bitcast is identity
+        // and the resulting pointer IS the address of the struct's storage.
+        var point = Point(x: 3, y: 7)
+        let meta = reflectStruct(Point.self)!
+
+        withUnsafeMutableBytes(of: &point) { bytes in
+            var ptr: RawPointer = bytes.baseAddress!
+
+            // getValue<T, O>
+            let x: Int = meta.getValue(forKey: "x", from: ptr)
+            XCTAssertEqual(x, 3)
+
+            // getValueBox
+            let yBox = meta.getValueBox(forKey: "y", from: ptr)
+            XCTAssertEqual(yBox.toAny as? Int, 7)
+
+            // set<T, O>(on: inout) — ptr~ == ptr (identity), writes to point.x
+            meta.set(value: 10, forKey: "x", on: &ptr)
+        }
+        XCTAssertEqual(point.x, 10)
+    }
+
+    func testGetValueBoxSuperclassField() {
+        // Exercises the superclass-recursion path in ClassMetadata.getValueBox
+        let box = employee.getValueBox(forKey: "name", from: bob)
+        XCTAssertEqual(box.toAny as? String, bob.name)
+    }
+
+    func testKVCSetWithBridgedValue() {
+        // NSNumber ≠ Double in the type system, so ClassMetadata.set triggers
+        // the try?-dynamicCast path (implicit closure #1); NSNumber→Double succeeds
+        let emp = Employee(name: "Test", age: 30, position: "Dev", salary: 0)
+        let meta = reflectClass(Employee.self)!
+        meta.set(value: NSNumber(value: 75_000.0), forKey: "salary", pointer: emp~)
+        XCTAssertEqual(emp.salary, 75_000.0)
+    }
+
+    func testDynamicCastFailure() {
+        // Exercises the throw branch of Metadata.dynamicCast(from:)
+        let meta = reflect(String.self)
+        XCTAssertThrowsError(try meta.dynamicCast(from: 42 as Any))
+    }
+
+    func testAnyExistentialContainerNilEnum() {
+        // Optional<Int> is an enum at the runtime level; init(nil: EnumMetadata)
+        // creates an Optional<Int>.none wrapped in an existential
+        let optMeta = reflect(Int?.self) as! EnumMetadata
+        let nilBox = AnyExistentialContainer(nil: optMeta)
+        // toAny gives Optional<Int>.none; casting it to Int? succeeds with a nil inner value
+        let asOptional: Int?? = nilBox.toAny as? Int?
+        XCTAssertNotNil(asOptional as Any?) // outer cast succeeded
+        XCTAssertNil(asOptional!)           // inner Optional<Int> is .none
+    }
+
+    func testGetValueBufferAllocatesBox() {
+        // FourInts is 32 bytes — larger than the 24-byte existential inline buffer,
+        // so getValueBuffer() must allocate a heap box (implicit closure #1)
+        var big = FourInts()
+        let meta = reflectStruct(FourInts.self)!
+        withUnsafeMutableBytes(of: &big) { bytes in
+            let ptr: RawPointer = bytes.baseAddress!
+            let box = AnyExistentialContainer(boxing: ptr, type: meta)
+            XCTAssertFalse(box.isEmpty)
+        }
+    }
+
     func testRetainIfObject() {
         XCTAssertTrue(Unmanaged<AnyObject>.retainIfObject(bob))
         XCTAssertFalse(Unmanaged<AnyObject>.retainIfObject(42))
+    }
+
+    func testUnsafeRawPointerSubscriptGetter() {
+        // UnsafeRawPointer (immutable) subscript getter
+        var value: Int = 42
+        withUnsafeBytes(of: &value) { bytes in
+            let immutablePtr: UnsafeRawPointer = bytes.baseAddress!
+            let result: Int = immutablePtr[0]
+            XCTAssertEqual(result, 42)
+        }
+    }
+
+    func testRawPointerSubscriptSetter() {
+        // UnsafeMutableRawPointer subscript setter
+        let meta = reflect(Int.self)
+        var ptr = RawPointer.allocateBuffer(for: meta)
+        defer { ptr.deallocate() }
+        ptr[0] = 99 as Int
+        let readBack: Int = ptr[0]
+        XCTAssertEqual(readBack, 99)
+    }
+
+    func testRawPointerWrappingInit() {
+        // RawPointer.init(wrapping:withType:) — allocates and stores a value
+        let meta = reflect(Int.self)
+        let ptr = RawPointer(wrapping: 123 as Any, withType: meta)
+        defer { ptr.deallocate() }
+        let value: Int = ptr[0]
+        XCTAssertEqual(value, 123)
+    }
+
+    func testRawPointerCopyMemoryTupleElement() {
+        // copyMemory(ofTupleElement:layout:)
+        let tupleMeta = reflect((Int, Double).self) as! TupleMetadata
+        let element = tupleMeta.elements[0]  // Int, offset 0
+        let dest = RawPointer.allocate(byteCount: tupleMeta.vwt.size,
+                                       alignment: tupleMeta.vwt.flags.alignment)
+        defer { dest.deallocate() }
+        var srcValue: Int = 55
+        withUnsafeBytes(of: &srcValue) { bytes in
+            dest.copyMemory(ofTupleElement: bytes.baseAddress!, layout: element)
+        }
+        XCTAssertEqual(dest.load(fromByteOffset: element.offset, as: Int.self), 55)
+    }
+
+    func testRawPointerCopyMemoryFromType() {
+        // copyMemory(from:type:offset:)
+        let meta = reflect(Int.self)
+        let dest = RawPointer.allocateBuffer(for: meta)
+        defer { dest.deallocate() }
+        var srcValue: Int = 77
+        withUnsafeMutableBytes(of: &srcValue) { bytes in
+            dest.copyMemory(from: bytes.baseAddress!, type: meta)
+        }
+        let result: Int = dest[0]
+        XCTAssertEqual(result, 77)
     }
 
     func testRawPointerAllocateBuffer() {
